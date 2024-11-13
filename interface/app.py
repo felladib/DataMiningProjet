@@ -10,16 +10,23 @@ import plotly.graph_objects as go
 from scipy.stats import gaussian_kde
 import numpy as np
 
-global i
-i=0
+
+    
 # Configurer la page en premier
 st.set_page_config(page_title="Climat App", page_icon="🌍", layout="wide")
 
 
+
 # Loadin_dataset
-data1 = pd.read_excel(r"data\soil_dz_allprops.xlsx")
+data = pd.read_excel(r"data\soil_dz_allprops.xlsx")
 data2 = pd.read_excel(r"data\soil_dz_allprops.xlsx")
-print(len(data1))
+print(len(data))
+
+# Initialisation de l'état dans session_state
+if 'choices_validated' not in st.session_state:
+    st.session_state['choices_validated'] = False
+if 'selected_data' not in st.session_state:
+    st.session_state['selected_data'] = data
 
 class ClimatApp:
     def __init__(self):
@@ -28,15 +35,14 @@ class ClimatApp:
         self.plot_type = None
         self.preprocess_options = {}
         self.choices_validated = False
-        
-        
-
+    
     def get_image_base64(self, image_path):
         with open(image_path, "rb") as image_file:
             return base64.b64encode(image_file.read()).decode("utf-8")
     
     def show_welcome_image(self,placeholder):
     # Affiche l'image seulement si les choix n'ont pas encore été validés
+        
         if not self.choices_validated:
             welcome_image_path = os.path.join("assets", "XfQ8.gif")
             if os.path.exists(welcome_image_path):
@@ -58,13 +64,13 @@ class ClimatApp:
         else:
             placeholder.empty()
         
-    
     def configure_page(self):
         st.sidebar.title("Configuration")
 
     def select_dataset(self):
+        st.sidebar.subheader("Datasets disponibles")
         dataset_choice = st.sidebar.selectbox("Choisir un dataset", ["Dataset 1", "Dataset 2"])
-        self.selected_data = data1 if dataset_choice == "Dataset 1" else data2
+        self.selected_data = data if dataset_choice == "Dataset 1" else data2
 
     def show_attributes(self):
         st.sidebar.subheader("Attributs disponibles")
@@ -74,27 +80,29 @@ class ClimatApp:
     def select_plot_type(self):
         st.sidebar.subheader("Visualisation")
         plot_attributes = {}
+
+        # Ajouter une liste des types de visualisation disponibles
+        available_plot_types = ["Boxplot", "Scatter","Map"]
         
+        
+        # Choisir le type de visualisation
+        self.plot_type = st.sidebar.selectbox("Choisir le type de visualisation", available_plot_types)
+
+        # Attributs pour chaque type de visualisation
         if self.plot_type == "Boxplot":
-        # Attributs pour le boxplot
             self.boxplot_attr = st.sidebar.multiselect("Choisir l'attribut pour le boxplot", options=self.selected_data.columns, default=self.selected_attributes)
-            plot_attributes['boxplot'] = self.boxplot_attr  # Ajouter au dictionnaire
+            plot_attributes['boxplot'] = self.boxplot_attr
 
         elif self.plot_type == "Scatter":
-            # Attributs pour le scatter plot
             self.x_attr = st.sidebar.selectbox("Choisir l'attribut pour l'axe X", self.selected_attributes)
             self.y_attr = st.sidebar.selectbox("Choisir l'attribut pour l'axe Y", self.selected_attributes)
-            plot_attributes['scatter'] = {'x': self.x_attr, 'y': self.y_attr}  # Ajouter au dictionnaire
+            plot_attributes['scatter'] = {'x': self.x_attr, 'y': self.y_attr}
 
-        elif self.plot_type == "Histogram":
-            # Attribut pour l'histogramme
-            self.hist_attr = st.sidebar.selectbox("Choisir l'attribut pour l'histogramme", self.selected_data.columns)
-            plot_attributes['histogram'] = self.hist_attr  # Ajouter au dictionnaire
-        # Retourner le type de plot sélectionné et les attributs spécifiques au plot
+        elif self.plot_type == "Map":
+            # st.sidebar.write("Affichage de la carte disponible pour les datasets contenant des coordonnées géographiques.")
+            plot_attributes['map'] = {'latitude': 'latitude', 'longitude': 'longitude'}
+
         return self.plot_type, plot_attributes
-
-
-
 
     def select_preprocessing(self):
         st.sidebar.subheader("Pré-traitement")
@@ -110,10 +118,20 @@ class ClimatApp:
         reduction = st.sidebar.selectbox("Choisir une méthode de réduction", ["None","Horizontal", "Vertical"])
         red_attributes = st.sidebar.multiselect("Attributs à réduire", self.selected_data.columns) if reduction != "None" else []
 
+        # Handling outliers
+        outliers = st.sidebar.selectbox("Choisir une méthode de traitement des valeurs aberrantes", ["None", "Delete", "Mean", "Median", "Mode"])
+        outlier_attributes = st.sidebar.multiselect("Attributs avec des valeurs aberrantes", self.selected_data.columns) if outliers != "None" else []
+        
+        # rodondance 
+        rodondance = st.sidebar.selectbox("Choisir une méthode de traitement des valeurs rodondantes", ["None", "Delete"])  
+        rodondance_attributes = st.sidebar.multiselect("Attributs avec des valeurs rodondantes", self.selected_data.columns) if rodondance != "None" else []
+
         self.preprocess_options = {
             "normalisation": (normalisation, norm_attributes),
             "discretisation": (discretisation, disc_attributes),
-            "reduction": (reduction, red_attributes)
+            "reduction": (reduction, red_attributes),
+            "outliers": (outliers, outlier_attributes),
+            "rodondance": (rodondance, rodondance_attributes)
         }
     
     def validate_button(self):
@@ -141,6 +159,7 @@ class ClimatApp:
             """, unsafe_allow_html=True
         )
         if st.sidebar.button("Valider"):
+            st.session_state['choices_validated'] = True
             self.choices_validated = True
             return True
         return False
@@ -170,19 +189,22 @@ class ClimatApp:
                         st.write(f"Max : {self.selected_data[col].max()}")
 
                 
-              
+                # Afficher le histogramme dans la deuxième colonne
                 with plot_col:
                     if pd.api.types.is_numeric_dtype(self.selected_data[col]):
                         # Histogramme
                         fig = go.Figure()
+                        hist_data = self.selected_data[col].dropna()
                         fig.add_trace(go.Histogram(
-                            x=self.selected_data[col],
+                            x=hist_data,
                             nbinsx=30,
-                            name="Histogram",
-                            marker=dict(color="skyblue"),
-                            opacity=0.75
+                            name="Histogramme",
+                            marker=dict(
+                                color="skyblue",                 # Couleur de remplissage
+                                line=dict(color="black", width=1)  # Bordure noire
+                            ),
+                            opacity=0.75,
                         ))
-
                         # Calculer la densité et ajouter la courbe
                         density = gaussian_kde(self.selected_data[col].dropna())
                         x_vals = np.linspace(self.selected_data[col].min(), self.selected_data[col].max(), 100)
@@ -202,36 +224,33 @@ class ClimatApp:
                             template="plotly_dark"
                         )
                         st.plotly_chart(fig, use_container_width=True)
+                        
+                        
             
-        # Afficher le graphique de distribution si la colonne est numérique        
-    def run_ann(self):
         
-        # Afficher l'image de bienvenue seulement si non validé et `i` est à 0
-       
-        if self.validate_button():
-            self.choices_validated = True
-            self.show_welcome_image(image_placeholder)
-            viz = DataVisualization(self.selected_data, self.selected_attributes, self.plot_type, self.preprocess_options)
-            viz.display_data_and_plots()
     def run(self):
         # Configure la page latérale et l'image de bienvenue
         self.configure_page()
-        
-        # Affiche les onglets pour passer entre "Data" et "Columns"
-        tabs = st.tabs(["Data", "Columns"])
-        
-        with tabs[0]:  # Onglet "Data"
-            self.select_dataset()   # Choisir le dataset dans la sidebar
-            self.show_dataset_overview()  # Affiche l'aperçu du dataset
-
-        with tabs[1]:  # Onglet "Columns"
-            self.show_column_information()  # Affiche les informations détaillées sur les colonnes
-
+        # self.show_welcome_image(st.empty())
+        self.select_dataset()
+        self.select_plot_type()
+        self.select_preprocessing()
         # Bouton de validation pour confirmer les choix
         if self.validate_button():
-            self.choices_validated = True
-            viz = DataVisualization(self.selected_data, self.selected_attributes, self.plot_type, self.preprocess_options)
-            viz.display_data_and_plots()
+            # st.empty()
+            # self.show_welcome_image(st.empty())
+            
+            # Affiche les onglets pour passer entre "Data" et "Columns"
+            tabs = st.tabs(["Data", "Columns","Visualisation"])
+            
+            with tabs[0]:  # Onglet "Data"
+                self.show_dataset_overview()  # Affiche l'aperçu du dataset
+
+            with tabs[1]:  # Onglet "Columns"
+                self.show_column_information()  # Affiche les informations détaillées sur les colonnes
+
+            
+            
 
 if __name__ == "__main__":
     app = ClimatApp()

@@ -69,33 +69,46 @@ L'application développée doit permettre les manipulations de données suivante
 
 #### Dataset `soil` (Données de sol)
 
-| Attribut                  | Type   | Description |
-|---------------------------|--------|-------------|
-| **CEC subsoil**           | float  | Capacité d'échange cationique dans le sous-sol (capacité du sol à retenir les nutriments). |
-| **CEC clay topsoil**      | float  | Capacité d'échange cationique dans l'argile de surface. |
-| **CEC Clay subsoil**      | float  | Capacité d'échange cationique dans l'argile du sous-sol. |
-| **CaCO3 % topsoil**       | float  | Pourcentage de carbonate de calcium en surface (affecte le pH du sol). |
-| **CaCO3 % subsoil**       | float  | Pourcentage de carbonate de calcium dans le sous-sol. |
-| **BD topsoil**            | float  | Densité apparente du sol en surface (mesure de la compacité). |
-| **BD subsoil**            | float  | Densité apparente du sol dans le sous-sol. |
-| **C/N topsoil**           | float  | Ratio carbone/azote en surface (indicateur de fertilité). |
-| **C/N subsoil**           | float  | Ratio carbone/azote dans le sous-sol. |
-| **geometry**              | Polygon| Géométrie des zones de sol. |
+| Attribut             | Type   | Description |
+|----------------------|--------|-------------|
+| **CNT_FULLNAME**     | string | Nom complet du pays ou de la région. |
+| **sand % topsoil**   | float  | Pourcentage de sable dans le sol de surface. |
+| **sand % subsoil**   | float  | Pourcentage de sable dans le sous-sol. |
+| **silt % topsoil**   | float  | Pourcentage de limon dans le sol de surface. |
+| **silt % subsoil**   | float  | Pourcentage de limon dans le sous-sol. |
+| **clay % topsoil**   | float  | Pourcentage d'argile dans le sol de surface. |
+| **clay % subsoil**   | float  | Pourcentage d'argile dans le sous-sol. |
+| **pH water topsoil** | float  | pH du sol de surface mesuré avec de l'eau (indicateur d'acidité ou de basicité). |
+| **pH water subsoil** | float  | pH du sous-sol mesuré avec de l'eau. |
+| **OC % topsoil**     | float  | Pourcentage de carbone organique dans le sol de surface. |
+| **OC % subsoil**     | float  | Pourcentage de carbone organique dans le sous-sol. |
+| **N % topsoil**      | float  | Pourcentage d'azote dans le sol de surface. |
+| **N % subsoil**      | float  | Pourcentage d'azote dans le sous-sol. |
+| **BS % topsoil**     | float  | Saturation basique en surface (indicateur de fertilité). |
+| **BS % subsoil**     | float  | Saturation basique dans le sous-sol. |
+| **CEC topsoil**      | float  | Capacité d'échange cationique en surface. |
+| **CEC subsoil**      | float  | Capacité d'échange cationique dans le sous-sol. |
+| **CEC clay topsoil** | float  | Capacité d'échange cationique de l'argile en surface. |
+| **CEC clay subsoil** | float  | Capacité d'échange cationique de l'argile dans le sous-sol. |
+| **CaCO3 % topsoil**  | float  | Pourcentage de carbonate de calcium dans le sol de surface. |
+| **CaCO3 % subsoil**  | float  | Pourcentage de carbonate de calcium dans le sous-sol. |
+| **BD topsoil**       | float  | Densité apparente du sol en surface. |
+| **BD subsoil**       | float  | Densité apparente dans le sous-sol. |
+| **C/N topsoil**      | float  | Ratio carbone/azote en surface (indicateur de fertilité). |
+| **C/N subsoil**      | float  | Ratio carbone/azote dans le sous-sol. |
+| **geometry**         | Polygon | Géométrie des zones de sol (pour visualisation spatiale). |
+
 
 #### Dataset `climate` (Données climatiques de pluie)
 
-| Attribut      | Type     | Description |
-|---------------|----------|-------------|
-| **AREA**      | float    | Superficie de la zone couverte (peut varier en fonction de la grille des données). |
-| **PERIMETER** | float    | Périmètre de la zone étudiée (ici, c’est une approximation pour chaque point). |
-| **CNT1M_1_**  | int      | Identifiant unique pour chaque région étudiée dans le fichier NetCDF. |
-| **CNT1M_1_ID**| int      | Autre identifiant unique pour les entités de la grille. |
-| **FAO_NAME**  | string   | Nom du pays, ici en rapport avec les grilles de données. |
-| **FAO_CODE**  | int      | Code FAO associé aux données géographiques. |
-| **UN_CODE**   | int      | Code ONU correspondant à chaque pays, ici pour la région. |
-| **ISO_CODE**  | string   | Code ISO du pays (2 lettres). |
-| **CNTRY_NAME**| string   | Nom complet du pays. |
-| **ISO3_CODE** | string   | Code ISO à 3 lettres. |
+| Attribut       | Type      | Description |
+|----------------|-----------|-------------|
+| **lat**        | float     | Latitude du point de mesure. |
+| **lon**        | float     | Longitude du point de mesure. |
+| **time**       | datetime  | Timestamp indiquant la date et l'heure de la mesure. |
+| **spatial_ref**| string    | Référence spatiale utilisée pour le système de coordonnées. |
+| **Rainf**      | float     | Précipitations mesurées en millimètres (mm) pour le point donné. |
+
 
 
 ### Instructions
